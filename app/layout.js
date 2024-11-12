@@ -1,6 +1,6 @@
 import "./globals.css";
-import Header from "./ui/Header";
-import Footer from "./ui/Footer";
+import Header from "./UI/Header";
+import Footer from "./UI/Footer";
 
 export const metadata = {
   title: "Top Ten",
