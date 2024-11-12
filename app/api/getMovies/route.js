@@ -3,20 +3,19 @@ export async function GET(request) {
   const apiKey = process.env.TMDB_API_KEY;
   const { searchParams } = new URL(request.url);
   const page = searchParams.get("page") || 1;
-  const year = searchParams.get("year") || 2024;
 
-  const url = `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=en-US&sort_by=popularity.desc&year=${year}&page=${page}`;
+  // Request movies with pagination and increase the total number of results
+  const url = `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&release_date.gte=2024-01-01&release_date.lte=2024-12-31&sort_by=popularity.desc&page=${page}&language=en-US&include_adult=false`;
 
   try {
     const res = await fetch(url);
     const data = await res.json();
 
-    // Check if 'results' exist in the response
-    if (!data.results || !Array.isArray(data.results)) {
+    if (!data.results) {
       throw new Error("Invalid API response");
     }
 
-    // Map the 'results' array
+    // Return more movies by not limiting to the first 10
     const movies = data.results.map((movie) => ({
       id: movie.id,
       title: movie.title,
