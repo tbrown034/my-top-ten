@@ -1,4 +1,6 @@
 import "./globals.css";
+import Header from "./ui/Header";
+import Footer from "./ui/Footer";
 
 export const metadata = {
   title: "Top Ten",
@@ -8,7 +10,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="min-h-screen text-white bg-teal-900">
+        <Header />
+        <main className="container p-6 mx-auto">{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }
