@@ -7,10 +7,11 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const page = searchParams.get("page") || 1;
   const year = searchParams.get("year") || "2024";
-  const region = searchParams.get("region") || "US";
-  const voteCount = searchParams.get("vote_count") || "500";
+  const voteCount = searchParams.get("vote_count") || "100"; // Lowered default vote count
+  const sortBy = searchParams.get("sort_by") || "popularity.desc"; // Changed sorting
 
-  const url = `https://api.themoviedb.org/3/discover/tv?first_air_date_year=${year}&sort_by=vote_average.desc&page=${page}&region=${region}&vote_count.gte=${voteCount}&include_adult=false&language=en-US`;
+  // Removed `region` filter for broader results
+  const url = `https://api.themoviedb.org/3/discover/tv?first_air_date_year=${year}&sort_by=${sortBy}&page=${page}&vote_count.gte=${voteCount}&include_adult=false&language=en-US`;
 
   console.log(`[INFO] Fetching TV shows from TMDB: ${url}`);
 
@@ -70,13 +71,23 @@ function processTVData(data) {
       : null,
     firstAirDate: show.first_air_date || "Unknown",
     rating: show.vote_average || "N/A",
-    voteCount: show.vote_count || 0, // Number of reviews
+    voteCount: show.vote_count || 0,
   }));
 
   console.log(`[INFO] Successfully fetched ${shows.length} TV shows from TMDB`);
+  console.log(
+    `[INFO] Total Pages: ${data.total_pages}, Total Results: ${data.total_results}`
+  );
 
-  return new Response(JSON.stringify({ shows, totalPages: data.total_pages }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({
+      shows,
+      totalPages: data.total_pages,
+      totalResults: data.total_results,
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
