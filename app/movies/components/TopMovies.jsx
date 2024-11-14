@@ -7,6 +7,7 @@ const TopMovies = ({ onAddMovie }) => {
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const fetchMovies = async (page = 1) => {
     setLoading(true);
@@ -15,12 +16,17 @@ const TopMovies = ({ onAddMovie }) => {
       if (!response.ok)
         throw new Error(`Failed to fetch movies: ${response.status}`);
       const data = await response.json();
-      setMovies((prevMovies) => [
-        ...prevMovies,
-        ...data.movies.filter(
-          (movie) => !prevMovies.some((m) => m.id === movie.id)
-        ),
-      ]);
+
+      if (data.movies.length === 0) {
+        setHasMore(false);
+      } else {
+        setMovies((prevMovies) => [
+          ...prevMovies,
+          ...data.movies.filter(
+            (movie) => !prevMovies.some((m) => m.id === movie.id)
+          ),
+        ]);
+      }
     } catch (error) {
       console.error(`[ERROR] ${error.message}`);
     } finally {
@@ -30,18 +36,18 @@ const TopMovies = ({ onAddMovie }) => {
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "short", day: "numeric" };
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, options);
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const formatNumber = (number) => {
-    return number.toLocaleString();
-  };
+  const formatNumber = (number) => number.toLocaleString();
 
   const renderStars = (rating) => {
     const stars = Math.round((rating / 10) * 5);
     return (
-      <div className="flex">
+      <div
+        className="flex"
+        aria-label={`Rating: ${rating.toFixed(1)} out of 10`}
+      >
         {Array.from({ length: 5 }, (_, index) => (
           <span
             key={index}
@@ -59,56 +65,101 @@ const TopMovies = ({ onAddMovie }) => {
   }, [page]);
 
   return (
-    <div className="grid w-full gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      {movies.map((movie) => (
-        <Link
-          href={`/movies/${movie.id}`}
-          key={movie.id}
-          className="block p-4 bg-teal-800 rounded-lg shadow-md hover:bg-teal-700"
-        >
-          <div className="relative w-full mb-2 h-96">
-            <Image
-              src={movie.posterPath || "/placeholder.png"}
-              alt={movie.title || "No title available"}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
-              style={{ objectFit: "cover", objectPosition: "center" }}
-              className="rounded-md"
-              loading="lazy"
-            />
-          </div>
-          <h4 className="text-lg font-semibold">{movie.title}</h4>
-          <p className="text-sm text-gray-300">
-            Release Date: {formatDate(movie.releaseDate)}
-          </p>
-          <div className="flex items-center">
-            {renderStars(movie.rating)}
-            <span className="ml-2 text-sm text-gray-300">
-              {movie.rating.toFixed(1)} / 10
-            </span>
-          </div>
-          <p className="text-sm text-gray-300">
-            Reviews: {formatNumber(movie.voteCount)}
-          </p>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onAddMovie(movie);
-            }}
-            className="px-4 py-2 mt-2 text-white bg-teal-600 rounded-lg hover:bg-teal-500"
+    <>
+      <div className="grid w-full gap-8 px-4 py-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {movies.map((movie) => (
+          <Link
+            href={`/movies/${movie.id}`}
+            key={movie.id}
+            className="block p-6 transition-transform transform bg-teal-800 rounded-lg shadow-lg hover:bg-teal-700 hover:scale-105"
+            aria-label={`Details about ${movie.title}`}
           >
-            Add
+            <div className="relative w-full mb-4 h-96">
+              <Image
+                src={movie.posterPath || "/placeholder.png"}
+                alt={movie.title || "No title available"}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                style={{ objectFit: "cover", objectPosition: "center" }}
+                className="rounded-md"
+                loading="lazy"
+              />
+            </div>
+            <h4 className="text-xl font-semibold text-white">{movie.title}</h4>
+            <p className="text-sm text-gray-300">
+              Release Date: {formatDate(movie.releaseDate)}
+            </p>
+            <div className="flex items-center mt-2">
+              {renderStars(movie.rating)}
+              <span className="ml-2 text-sm text-gray-300">
+                {movie.rating.toFixed(1)} / 10
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-gray-300">
+              Reviews: {formatNumber(movie.voteCount)}
+            </p>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onAddMovie(movie);
+              }}
+              className="w-full px-4 py-2 mt-4 text-white transition-colors bg-teal-600 rounded-lg hover:bg-teal-500"
+            >
+              Add to Favorites
+            </button>
+          </Link>
+        ))}
+      </div>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="flex justify-center py-8">
+          <button
+            onClick={() => setPage(page + 1)}
+            className="px-8 py-3 text-lg font-semibold text-white transition-colors bg-teal-600 rounded-lg hover:bg-teal-500"
+            disabled={loading}
+            aria-label="Load more movies"
+          >
+            {loading ? (
+              <span className="flex items-center">
+                <svg
+                  className="w-5 h-5 mr-2 animate-spin"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                Loading...
+              </span>
+            ) : (
+              "Load More"
+            )}
           </button>
-        </Link>
-      ))}
-      <button
-        onClick={() => setPage(page + 1)}
-        className="px-4 py-2 mt-4 text-white bg-teal-600 rounded-lg hover:bg-teal-500"
-        disabled={loading}
-      >
-        {loading ? "Loading..." : "Load More"}
-      </button>
-    </div>
+        </div>
+      )}
+
+      {/* End of List Message */}
+      {!hasMore && (
+        <div className="flex justify-center py-8">
+          <p className="text-lg text-gray-400">
+            You've reached the end of the list.
+          </p>
+        </div>
+      )}
+    </>
   );
 };
 
