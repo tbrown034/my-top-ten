@@ -12,7 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="min-h-screen text-white bg-teal-900">
         <Header />
-        <main className="container p-6 mx-auto">{children}</main>
+        <main className="container max-w-5xl p-6 mx-auto">{children}</main>
         <Footer />
       </body>
     </html>
